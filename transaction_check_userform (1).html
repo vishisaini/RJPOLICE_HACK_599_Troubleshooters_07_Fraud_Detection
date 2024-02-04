@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Verification</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: black;
+        }
+
+        #form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px; /* Added padding for better appearance */
+        }
+
+        #question {
+            font-size: 30px;
+            font-weight: bold;
+            color: black;
+            margin-top: 20px; /* Adjusted margin */
+            text-align: center;
+            display: none;
+        }
+
+        #details-box {
+            border: 2px solid indigo;
+            border-radius: 10px;
+            padding: 20px;
+            width: 60%;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: 60vh;
+            display: none;
+        }
+
+        #options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .option {
+            flex: 1; /* Make options take equal width */
+            padding: 10px;
+            border: 2px solid indigo;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: indigo;
+            color: white;
+            margin-right: 8px; /* Adjusted margin between options */
+        }
+
+        #transaction-id-input {
+            padding: 10px;
+            border: 2px solid indigo;
+            border-radius: 5px;
+            margin-top: 20px;
+            width: 60%;
+            font-size: 16px;
+            box-sizing: border-box;
+            align-self: flex-start; /* Align input to the start of the container */
+        }
+
+        #submit-btn {
+            background-color: black;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            cursor: pointer;
+            align-self: flex-start; /* Align submit button to the start of the container */
+        }
+
+        #thank-you-page {
+            display: none;
+            background-color: indigo;
+            color: white;
+            font-size: 40px;
+            text-align: center;
+            padding: 50px;
+            border-radius: 10px;
+        }
+
+        #response-message {
+            display: none;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        #blank-space {
+            height: 4em; /* Blank space before the page ends */
+        }
+    </style>
+</head>
+<body>
+    <div id="form-container">
+        <input type="text" id="transaction-id-input" placeholder="Enter your Transaction ID here">
+        <button id="submit-btn" onclick="submitTransactionID()">Submit</button>
+
+        <div id="question">
+            <p>Was this transaction made by you?</p>
+        </div>
+
+        <div id="details-box">
+            <!-- Transaction details will appear here after submitting the Transaction ID -->
+        </div>
+
+        <div id="options">
+            <div class="option" onclick="selectOption('Yes')">Yes this was done by me</div>
+            <div class="option" onclick="selectOption('No')">No this was not done by me, report police</div>
+        </div>
+
+        <div id="thank-you-page">We appreciate your response.<br>Thank you!</div>
+        <div id="response-message"></div>
+    </div>
+
+    <div id="blank-space"></div>
+
+    <script>
+
+        let transactionId;
+        let sender_account;
+
+        function submitTransactionID() {
+
+            transactionId = document.getElementById('transaction-id-input').value;
+
+            getTransactionData(transactionId);
+
+            // document.getElementById('details-box').innerHTML = `
+            //     <p><strong>Transaction Number:</strong> T12XXXXXXXXXXX</p>
+            //     <p><strong>Transaction Amount:</strong> Rs. XXXXX</p>
+            //     <p><strong>Account Number:</strong> A12XXXXXXXXXX</p>
+            //     <p><strong>Transaction Date:</strong> xx/xx/xxxx</p>
+            //     <p><strong>Transaction Time:</strong> XX:XX:XX</p>
+            //     <p><strong>Transaction Made by:</strong> Name Name</p>
+            // `;
+
+            document.getElementById('question').style.display = 'block';
+            document.getElementById('details-box').style.display = 'block';
+            document.getElementById('options').style.display = 'flex';
+        }
+
+        function selectOption(option) {
+            console.log("Selected option:", option);
+
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('response-message').style.display = 'block';
+            document.getElementById('thank-you-page').style.display = 'block';
+
+            if (option === 'Yes') {
+                document.getElementById('response-message').innerHTML = 'Thank you for confirming that the transaction was made by you.';
+            } else {
+                openCase(transactionId,sender_account)
+                document.getElementById('response-message').innerHTML = 'Thank you for reporting. Appropriate action will be taken.';
+            }
+        }
+
+        function getTransactionData(transactionId) {
+            // Replace 'your_api_endpoint' with your actual API endpoint
+            const apiEndpoint = `http://127.0.0.1:5000/api/transaction/${transactionId}`;
+
+            // Make a GET request using the Fetch API
+            fetch(apiEndpoint)
+                .then(response => {
+                    // Check if the response is successful (status code 200-299)
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status: ${response.status}`);
+                    }
+                    // Parse the response as JSON
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the data from the API response
+                    console.log('API response data:', data);
+                    // Perform further actions with the data
+                    sender_account = data.sender_account
+                    document.getElementById('details-box').innerHTML = `
+                        <p><strong>Transaction Id:</strong> ${data.transactionid}</p>
+                        <p><strong>Transaction Amount:</strong> Rs. ${data.amount}</p>
+                        <p><strong>Account Number:</strong> ${data.sender_account}</p>
+                        <p><strong>Transaction Date:</strong> ${data.transaction_date}</p>
+                        <p><strong>Transaction Type:</strong> ${data.transactiontype}</p>
+                    `;
+                })
+                .catch(error => {
+                    // Handle errors during the API call
+                    console.error('API error:', error);
+                })
+        }
+
+
+        function openCase(transactionId,sender_account) {
+        // Replace 'your_post_api_endpoint' with your actual POST API endpoint
+        const postApiEndpoint = `http://127.0.0.1:5000/api/case/openCase`;
+
+        // Example data to be sent in the POST request body
+        const postData = {
+            transactionid: transactionId,
+            sender_account: sender_account,  // You can customize this based on your API requirements
+        };
+
+        // Make a POST request using the Fetch API
+        fetch(postApiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(postData),
+        })
+        .then(response => {
+            // Check if the response is successful (status code 200-299)
+            if (!response.ok) {
+                throw new Error(`API request failed with status: ${response.status}`);
+            }
+            // Parse the response as JSON
+            return response.json();
+        })
+        .then(data => {
+            // Handle the data from the API response (if needed)
+            console.log('POST API response data:', data);
+        })
+        .catch(error => {
+            // Handle errors during the API call
+            console.error('POST API error:', error);
+        });
+    }
+    </script>
+</body>
+</html>
