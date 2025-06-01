@@ -1,3 +1,3 @@
-# RJPOLICE_HACK_599_Troubleshooters_07
+# project for IDTHOP also used in RJPolice Hackathon
 
 ![Alt Text](UI-Image.png)
